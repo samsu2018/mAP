@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Using:
+    python main.py \
+      --img_path /aisrc/dataset/coco_human_vehicle/coco_human_vehicle_val/images/val \
+      --lab_path /aisrc/dataset/coco_human_vehicle/coco_human_vehicle_val_bbox \
+      --pred_path /aisrc/dataset/coco_human_vehicle/out_yolov5n_ReLU6/coco_human_vehicle_val_bbox
+"""
 import glob
 import json
 import os
@@ -10,6 +18,9 @@ import math
 import numpy as np
 
 MINOVERLAP = 0.5 # default value (defined in the PASCAL VOC2012 challenge)
+lab_path = './input/ground-truth'
+pred_path = './input/detection-results'
+img_path = './input/images-optional'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-na', '--no-animation', help="no animation is shown.", action="store_true")
@@ -19,6 +30,10 @@ parser.add_argument('-q', '--quiet', help="minimalistic console output.", action
 parser.add_argument('-i', '--ignore', nargs='+', type=str, help="ignore a list of classes.")
 # argparse receiving list of classes with specific IoU (e.g., python main.py --set-class-iou person 0.7)
 parser.add_argument('--set-class-iou', nargs='+', type=str, help="set IoU for a specific class.")
+parser.add_argument('-gt', '--truth_path', help="no animation is shown.", action="store_true")
+parser.add_argument('--lab_path', type=str, help='directory of ground-truth', default=lab_path)
+parser.add_argument('--pred_path', type=str, help='directory of detection-results', default=pred_path)
+parser.add_argument('--img_path', type=str, help='directory of images-optional', default=img_path)
 args = parser.parse_args()
 
 '''
@@ -44,10 +59,16 @@ if args.set_class_iou is not None:
 # make sure that the cwd() is the location of the python script (so that every path makes sense)
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-GT_PATH = os.path.join(os.getcwd(), 'input', 'ground-truth')
-DR_PATH = os.path.join(os.getcwd(), 'input', 'detection-results')
+# GT_PATH = os.path.join(os.getcwd(), 'input', 'ground-truth')
+# DR_PATH = os.path.join(os.getcwd(), 'input', 'detection-results')
+# # if there are no images then no animation can be shown
+# IMG_PATH = os.path.join(os.getcwd(), 'input', 'images-optional')
+###After Sam changed###
+GT_PATH = args.lab_path
+DR_PATH = args.pred_path
 # if there are no images then no animation can be shown
-IMG_PATH = os.path.join(os.getcwd(), 'input', 'images-optional')
+IMG_PATH = args.img_path
+
 if os.path.exists(IMG_PATH): 
     for dirpath, dirnames, files in os.walk(IMG_PATH):
         if not files:
@@ -295,7 +316,7 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
             if i == (len(sorted_values)-1): # largest bar
                 adjust_axes(r, t, fig, axes)
     # set window title
-    fig.canvas.set_window_title(window_title)
+    fig.canvas.manager.set_window_title(window_title)
     # write classes in y axis
     tick_font_size = 12
     plt.yticks(range(n_classes), sorted_keys, fontsize=tick_font_size)
@@ -701,7 +722,7 @@ with open(output_files_path + "/output.txt", 'w') as output_file:
             plt.fill_between(area_under_curve_x, 0, area_under_curve_y, alpha=0.2, edgecolor='r')
             # set window title
             fig = plt.gcf() # gcf - get current figure
-            fig.canvas.set_window_title('AP ' + class_name)
+            fig.canvas.manager.set_window_title('AP ' + class_name)
             # set plot title
             plt.title('class: ' + text)
             #plt.suptitle('This is a somewhat long figure title', fontsize=16)
